@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+# solaris-fetch — SEU CXXY RoboMaster · SOLARIS TEAM 终端横幅（独立程序，与 neofetch 无关）
+# 左侧 SOLARIS 块状图标 + 校徽（太阳渐变色），右侧战队 + 系统信息
+# 用法:
+#   solaris-fetch            直接显示
+#   solaris-fetch -a         逐行动画显示
+set -u
+
+RST=$'\033[0m' BOLD=$'\033[1m' DIM=$'\033[2m'
+tc(){ printf '\033[38;2;%d;%d;%dm' "$1" "$2" "$3"; }
+
+# ── 字体块（6x7 字符，# = 实心块，. = 空格）──
+g_S=(".####." "##...." "##...." ".###.." "....##" "....##" "###...")
+g_O=(".####." "##..##" "##..##" "##..##" "##..##" "##..##" ".####.")
+g_L=("##...." "##...." "##...." "##...." "##...." "##...." "######")
+g_A=(".####." "##..##" "##..##" "######" "##..##" "##..##" "##..##")
+g_R=("#####." "##..##" "##..##" "#####." "##.#.." "##..#." "##...#")
+g_I=("######" "..##.." "..##.." "..##.." "..##.." "..##.." "######")
+
+colored=()
+for n in 0 1 2 3 4 5 6; do
+  raw="${g_S[n]} ${g_O[n]} ${g_L[n]} ${g_A[n]} ${g_R[n]} ${g_I[n]} ${g_S[n]}"
+  line=""; len=${#raw}
+  for ((x=0; x<len; x++)); do
+    c=${raw:x:1}
+    if [[ $c == "#" ]]; then
+      # 水平渐变：琥珀金 → 太阳红
+      g=$((205 - 150 * x / (len-1)))
+      b=$((40 - 15 * x / (len-1)))
+      line+="$(tc 255 "$g" "$b")█${RST}"
+    else
+      line+=" "
+    fi
+  done
+  colored+=("$line")
+done
+W=48   # 图标可视宽度
+
+# ── 顶部 ROBOMASTER 艺体字：3 行半块字体，比 SOLARIS(7 行)小一档 ──
+# 双色金属：▀▄ 横笔=亮银高光，█ 竖笔=枪铁蓝灰，模拟装甲明暗面
+rR=("█▀█" "██▀" "█ █"); rO=("█▀█" "█ █" "▀▀▀"); rB=("█▀▄" "█▀▄" "▀▀▀")
+rM=("█▄▀▄█" "█ ▀ █" "█   █"); rA=("█▀█" "███" "█ █"); rS=("█▀▀" "▀▀█" "▀▀▀")
+rT=("▀█▀" " █ " " █ "); rE=("█▀▀" "██ " "▀▀▀")
+rmc=()
+for n in 0 1 2; do
+  body="${rR[n]} ${rO[n]} ${rB[n]} ${rO[n]} ${rM[n]} ${rA[n]} ${rS[n]} ${rT[n]} ${rE[n]} ${rR[n]}"
+  bl=${#body}; ld=$(( (W - bl) / 2 )); rd=$(( W - bl - ld ))
+  L=""
+  for ((p=0; p<ld; p++)); do L+="${DIM}$(tc 110 120 138)─${RST}"; done
+  for ((x=0; x<bl; x++)); do
+    c=${body:x:1}
+    case $c in
+      ▀|▄) L+="$(tc 235 240 250)$c${RST}" ;;
+      █)   L+="$(tc 150 162 185)$c${RST}" ;;
+      *)   L+=" " ;;
+    esac
+  done
+  for ((p=0; p<rd; p++)); do L+="${DIM}$(tc 110 120 138)─${RST}"; done
+  rmc+=("$L")
+done
+colored=("${rmc[@]}" "${colored[@]}")
+
+# ── 左下角：东南大学校徽简化版（黄环+绿三角+大礼堂，字样可读）──
+yE="$(tc 250 200 40)"; gE="$(tc 96 168 84)"; wE="$(tc 232 226 216)"
+P26="                          "   # 26 空格，把 22 宽的校徽补到图标栏 48 宽
+e=()
+e+=("  ${yE}╭──── 東南大學 ────╮${RST}${P26}")
+e+=("  ${yE}│${RST}     ${gE}▔▔▔▔▔▔▔▔${RST}     ${yE}│${RST}${P26}")
+e+=("  ${yE}│${RST}    ${gE}╲${RST} ${yE}▄▄▄▄▄▄${RST} ${gE}╱${RST}    ${yE}│${RST}${P26}")
+e+=("  ${yE}│${RST} ${wE}1902${RST} ${yE}▟████▙${RST} ${wE}南京${RST} ${yE}│${RST}${P26}")
+e+=("  ${yE}│${RST}       ${gE}╲▀▀╱${RST}       ${yE}│${RST}${P26}")
+e+=("  ${yE}╰──── 止於至善 ────╯${RST}${P26}")
+colored+=("${e[@]}")
+
+# ── 系统信息（取不到就优雅降级，不会报错）──
+user="${USER:-$(id -un 2>/dev/null || echo user)}"
+host="$(hostname 2>/dev/null | cut -c1-20 || true)"; host="${host:-seu-cxxy}"
+os="Linux"
+[[ -r /etc/os-release ]] && os="$(. /etc/os-release && echo "${PRETTY_NAME:-$NAME $VERSION}")"
+kernel="$(uname -r 2>/dev/null || echo '?')"
+uptime="?"; [[ -r /proc/uptime ]] && uptime="$(awk '{s=$1+0; d=int(s/86400); h=int(s%86400/3600); m=int(s%3600/60); o=""; if(d)o=o d"d "; if(h||d)o=o h"h "; print o m"m"}' /proc/uptime)"
+shell="$(basename "${SHELL:-bash}")"
+cpu="$(awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo 2>/dev/null)"
+[[ -z $cpu ]] && cpu="$(uname -m)"
+cpu="$(printf '%s' "$cpu" | sed -E 's/\([RrTtMmCcEe]+\)//g; s/@.*//; s/[[:space:]]+/ /g; s/[[:space:]]+$//' | cut -c1-34)"
+mem="? / ?"
+[[ -r /proc/meminfo ]] && mem="$(awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{if(t)printf "%d / %d MiB",(t-a)/1024,t/1024}' /proc/meminfo)"
+gpu="$(lspci 2>/dev/null | awk -F': ' '/VGA|3D|Display/{print $NF; exit}' | sed -E 's/^.*: //; s/\[.*//; s/[[:space:]]+$//' | cut -c1-34)"
+ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+
+# ── 右侧面板 ──
+oY="$(tc 255 184 60)"   # 海报金橙
+oR="$(tc 255 82 45)"    # 海报警示红
+wt="$(tc 232 226 216)"  # 米白
+gy="$(tc 148 140 130)"  # 暗灰
+lab(){ printf '%s%-7s%s%s' "$oR" "$1" "$wt" "$2"; }
+
+right=()
+right+=("${BOLD}${oY}SEU CXXY ${wt}· ${oR}ROBOMASTER${RST}")
+right+=("${oR}╭${oY}────────────────────────────${oR}╮${RST}")
+right+=("${oR}│${BOLD}${wt}   S O L A R I S  T E A M   ${oR}│${RST}")
+right+=("${oR}╰${oY}────────────────────────────${oR}╯${RST}")
+right+=("$(lab host  "${user}@${host}")")
+right+=("$(lab os    "${os}")")
+right+=("$(lab kernel "${kernel}")")
+right+=("$(lab uptime "${uptime}")")
+right+=("$(lab shell  "${shell}")")
+right+=("$(lab cpu   "${cpu}")")
+[[ -n $gpu ]] && right+=("$(lab gpu    "${gpu}")")
+[[ -n $ip  ]] && right+=("$(lab ip     "${ip}")")
+right+=("$(lab mem   "${mem}")")
+right+=("$(lab school "东南大学成贤学院 (SEU CXXY)")")
+right+=("$(lab team   "Solaris")")
+right+=("$(lab slogan "秣陵形胜，共赴千山")")
+right+=("${DIM}${gy}────────────────────────────${RST}")
+right+=("${oY}▸ SYS.ACTIVE ${oR}● ${wt}SOLARIS-2026 ${oR}● ${wt}TEAM-01${RST}")
+
+# ── 合成：左图标 7 行 + 右信息 ──
+out=()
+R=${#right[@]}
+for ((n=0; n<16 || n<R; n++)); do
+  L="${colored[n]:-}"
+  [[ -z ${colored[n]:-} ]] && L="$(printf '%*s' "$W" '')"
+  out+=("${L}   ${right[n]:-}")
+done
+
+# ── 底部：渐变能量条 + 战队口号 ──
+bar=""
+for ((x=0; x<W+40; x++)); do
+  t=$((150 * x / (W+39))); g=$((205 - t)); b=$((40 - 15 * x / (W+39)))
+  bar+="$(tc 255 "$g" "$b")▇"
+done
+out+=("${bar}${RST}")
+out+=("${DIM}${RST}")
+out+=("  ${BOLD}${oY}秣陵形胜，共赴千山${RST}")
+out+=("  ${DIM}$(tc 200 120 60)BEYOND LIMITS · DEFEND OUR HONOR · UNITED WE BUILD VICTORY${RST}")
+
+case "${1:-}" in
+  -a|--animate)
+    for l in "${out[@]}"; do printf '%s\n' "$l"; sleep 0.05; done
+    ;;
+  *)
+    printf '%s\n' "${out[@]}"
+    ;;
+esac
