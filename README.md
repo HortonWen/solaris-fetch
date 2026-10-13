@@ -47,7 +47,7 @@
 依赖：仅 `bash`（以及常规 coreutils / awk / sed）。Ubuntu / Debian / WSL 可直接使用。
 
 ```bash
-git clone https://github.com/SEU-CXXY-SOLARIS/solaris-fetch.git   # 替换为实际仓库地址
+git clone https://github.com/HortonWen/solaris-fetch.git
 cd solaris-fetch
 sudo install -m 755 solaris-fetch /usr/local/bin/solaris-fetch
 ```
@@ -62,6 +62,23 @@ solaris-fetch -a     # 逐行动画显示（开机自检既视感）
 ```
 
 想每次开终端自动展示，可在 `~/.bashrc` 末尾加一行 `solaris-fetch`。
+
+## PowerShell 版（Windows）
+
+`solaris-fetch.ps1` 是与 bash 版视觉完全一致的独立实现（系统信息改由 WMI/CIM 采集），适用于 Windows Terminal / pwsh / Windows PowerShell 5.1+：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\solaris-fetch.ps1            # 直接显示
+powershell -NoProfile -ExecutionPolicy Bypass -File .\solaris-fetch.ps1 -Animate   # 逐行动画
+```
+
+想随手调用，可在 PowerShell `$PROFILE` 中加：
+
+```powershell
+function sf { & 'C:\path\to\solaris-fetch.ps1' @args }
+```
+
+> 注：脚本为 UTF-8 with BOM 编码（Windows PowerShell 5.1 正确读取中文所需），请勿以 ANSI 重新保存。
 
 ## 自定义
 
