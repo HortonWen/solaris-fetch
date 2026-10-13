@@ -95,6 +95,21 @@ cxa-fetch        # 显示横幅
 cxa-fetch -a     # 逐行动画
 ```
 
+## 天文爱好者协会版 astro-fetch
+
+`astro-fetch` 是东南大学成贤学院**天文爱好者协会**的终端横幅，像素画还原协会徽章：
+
+- 星空圆环：左上蓝 → 右下紫对角渐变 + 伪随机白色星点，环上六处四角星芒
+- 白色花瓣形内框，框内为徽章的占星少女：灰蓝魔女帽（帽上星星+侧边行星珠）、猫耳冰白发、异色瞳（左青右紫）、右眼金色单片眼镜、腮红微笑
+- 顶部 `ASTRONOMY / ASSOCIATION` 暮紫渐变艺体字；信息栏保留 school 一栏，无口号
+- 底部蓝紫渐变能量条，状态行 `▸ CLEAR SKY ● ASTRO-2026 ● AD ASTRA`
+
+```bash
+sudo install -m 755 astro-fetch /usr/local/bin/astro-fetch
+astro-fetch        # 显示横幅
+astro-fetch -a     # 逐行动画
+```
+
 ## 自定义
 
 脚本为单文件 Bash，全部视觉定义集中在文件头部：
