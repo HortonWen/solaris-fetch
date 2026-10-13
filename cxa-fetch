@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# cxa-fetch — 东南大学成贤学院计算机协会 终端横幅（独立程序）
+# 左侧：协会英文名艺体字 + 奶龙像素画 + 校徽；右侧：协会 + 系统信息
+# 用法:
+#   cxa-fetch            直接显示
+#   cxa-fetch -a         逐行动画显示
+set -u
+
+RST=$'\033[0m' BOLD=$'\033[1m' DIM=$'\033[2m'
+tc(){ printf '\033[38;2;%d;%d;%dm' "$1" "$2" "$3"; }
+W=48
+
+# ── 顶部协会英文名艺体字：3 行半块字形，科技青渐变 ──
+gC=("█▀▀" "█  " "█▀▀"); gO=("█▀█" "█ █" "▀▀▀"); gM=("█▄▀▄█" "█ ▀ █" "█   █")
+gP=("█▀█" "█▀▀" "█  "); gU=("█ █" "█ █" "▀▀▀"); gT=("▀█▀" " █ " " █ ")
+gE=("█▀▀" "██ " "▀▀▀"); gR=("█▀█" "██▀" "█ █"); gA=("█▀█" "███" "█ █")
+gS=("█▀▀" "▀▀█" "▀▀▀"); gI=("█" "█" "█"); gN=("█▄▀█" "█  █" "█  █")
+words=("COMPUTER" "ASSOCIATION")
+name_rows=()
+for w in "${words[@]}"; do
+  for n in 0 1 2; do
+    body=""
+    for ((i=0; i<${#w}; i++)); do
+      ch=${w:i:1}
+      case $ch in
+        C) g=("${gC[@]}");; O) g=("${gO[@]}");; M) g=("${gM[@]}");; P) g=("${gP[@]}");;
+        U) g=("${gU[@]}");; T) g=("${gT[@]}");; E) g=("${gE[@]}");; R) g=("${gR[@]}");;
+        A) g=("${gA[@]}");; S) g=("${gS[@]}");; I) g=("${gI[@]}");; N) g=("${gN[@]}");;
+      esac
+      [[ -n $body ]] && body+=" "
+      body+="${g[n]}"
+    done
+    name_rows+=("$body")
+  done
+done
+colored=()
+for ((n=0; n<6; n++)); do
+  body=${name_rows[n]}
+  bl=${#body}; ld=$(( (W - bl) / 2 )); rd=$(( W - bl - ld ))
+  L=""
+  for ((p=0; p<ld; p++)); do L+="${DIM}$(tc 40 110 150)─${RST}"; done
+  for ((x=0; x<bl; x++)); do
+    c=${body:x:1}
+    if [[ $c == " " ]]; then L+=" "; else
+      g=$((225 - 85 * x / (bl-1))); b=255
+      L+="$(tc 0 "$g" "$b")$c${RST}"
+    fi
+  done
+  for ((p=0; p<rd; p++)); do L+="${DIM}$(tc 40 110 150)─${RST}"; done
+  colored+=("$L")
+done
+
+# ── 奶龙像素画（黄身/绿环黑瞳眼/微笑/奶白肚皮，无角）──
+dY1="$(tc 252 210 60)"; dY2="$(tc 242 192 48)"; dG="$(tc 70 200 90)"
+dK="$(tc 30 30 30)"; dC="$(tc 246 238 218)"
+dragon=(
+  ".........YYYYYYYYYYYY........."
+  ".......YYYYYYYYYYYYYYYY......."
+  "......YYGGGYYYYYYYYGGGYY......"
+  "......YYGKGYYYYYYYYGKGYY......"
+  "......YYYYYYYYYYYYYYYYYY......"
+  "......YYYYYYKKKKKKYYYYYY......"
+  ".....YYYYYYYYYYYYYYYYYYYY....."
+  ".....YYYYYCCCCCCCCCCYYYYY....."
+  "....YYYYYYCCCCCCCCCCYYYYYY...."
+  ".....YYYYYYYYYYYYYYYYYYYY....."
+)
+for ((r=0; r<${#dragon[@]}; r++)); do
+  row=${dragon[r]}
+  ycol=$([[ $r -le 5 ]] && echo "$dY1" || echo "$dY2")
+  L=""
+  for ((x=0; x<${#row}; x++)); do
+    c=${row:x:1}
+    case $c in
+      Y) L+="${ycol}█${RST}" ;;
+      G) L+="${dG}█${RST}" ;;
+      K) L+="${dK}█${RST}" ;;
+      C) L+="${dC}█${RST}" ;;
+      *) L+=" " ;;
+    esac
+  done
+  colored+=("$(printf '%9s' '')${L}$(printf '%9s' '')")   # 30 宽居中到 48
+done
+
+# ── 左下角：东南大学校徽简化版（协会同属本校，保留）──
+yE="$(tc 250 200 40)"; gE2="$(tc 96 168 84)"; wE="$(tc 232 226 216)"
+P26="                          "
+colored+=("  ${yE}╭──── 東南大學 ────╮${RST}${P26}")
+colored+=("  ${yE}│${RST}     ${gE2}▔▔▔▔▔▔▔▔${RST}     ${yE}│${RST}${P26}")
+colored+=("  ${yE}│${RST}    ${gE2}╲${RST} ${yE}▄▄▄▄▄▄${RST} ${gE2}╱${RST}    ${yE}│${RST}${P26}")
+colored+=("  ${yE}│${RST} ${wE}1902${RST} ${yE}▟████▙${RST} ${wE}南京${RST} ${yE}│${RST}${P26}")
+colored+=("  ${yE}│${RST}       ${gE2}╲▀▀╱${RST}       ${yE}│${RST}${P26}")
+colored+=("  ${yE}╰──── 止於至善 ────╯${RST}${P26}")
+
+# ── 系统信息 ──
+user="${USER:-$(id -un 2>/dev/null || echo user)}"
+host="$(hostname 2>/dev/null | cut -c1-20 || true)"; host="${host:-seu-cxxy}"
+os="Linux"
+[[ -r /etc/os-release ]] && os="$(. /etc/os-release && echo "${PRETTY_NAME:-$NAME $VERSION}")"
+kernel="$(uname -r 2>/dev/null || echo '?')"
+uptime="?"; [[ -r /proc/uptime ]] && uptime="$(awk '{s=$1+0; d=int(s/86400); h=int(s%86400/3600); m=int(s%3600/60); o=""; if(d)o=o d"d "; if(h||d)o=o h"h "; print o m"m"}' /proc/uptime)"
+shell="$(basename "${SHELL:-bash}")"
+cpu="$(awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo 2>/dev/null)"
+[[ -z $cpu ]] && cpu="$(uname -m)"
+cpu="$(printf '%s' "$cpu" | sed -E 's/\([RrTtMmCcEe]+\)//g; s/@.*//; s/[[:space:]]+/ /g; s/[[:space:]]+$//' | cut -c1-34)"
+mem="? / ?"
+[[ -r /proc/meminfo ]] && mem="$(awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{if(t)printf "%d / %d MiB",(t-a)/1024,t/1024}' /proc/meminfo)"
+gpu="$(lspci 2>/dev/null | awk -F': ' '/VGA|3D|Display/{print $NF; exit}' | sed -E 's/^.*: //; s/\[.*//; s/[[:space:]]+$//' | cut -c1-34)"
+ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+
+# ── 右侧面板（科技青主题）──
+cY="$(tc 0 200 240)"; cB="$(tc 0 140 255)"; wt="$(tc 232 226 216)"; gy="$(tc 148 140 130)"
+lab(){ printf '%s%-7s%s%s' "$cY" "$1" "$wt" "$2"; }
+right=()
+right+=("${BOLD}${cY}SEU CXXY ${wt}· ${cB}COMPUTER ASSOCIATION${RST}")
+right+=("${cB}╭${cY}────────────────────────────${cB}╮${RST}")
+right+=("${cB}│${BOLD}${wt}    COMPUTER ASSOCIATION    ${cB}│${RST}")
+right+=("${cB}╰${cY}────────────────────────────${cB}╯${RST}")
+right+=("$(lab host   "${user}@${host}")")
+right+=("$(lab os     "${os}")")
+right+=("$(lab kernel "${kernel}")")
+right+=("$(lab uptime "${uptime}")")
+right+=("$(lab shell  "${shell}")")
+right+=("$(lab cpu    "${cpu}")")
+[[ -n $gpu ]] && right+=("$(lab gpu    "${gpu}")")
+[[ -n $ip  ]] && right+=("$(lab ip     "${ip}")")
+right+=("$(lab mem    "${mem}")")
+right+=("$(lab school "东南大学成贤学院 (SEU CXXY)")")
+right+=("${DIM}${gy}────────────────────────────${RST}")
+right+=("${cY}▸ SYS.ONLINE ${cB}● ${wt}CXA-2026 ${cB}● ${wt}CODE · SHARE · CREATE${RST}")
+
+# ── 合成 ──
+out=()
+R=${#right[@]}
+LN=${#colored[@]}
+for ((n=0; n<LN || n<R; n++)); do
+  L="${colored[n]:-}"
+  [[ -z ${colored[n]:-} ]] && L="$(printf '%*s' "$W" '')"
+  out+=("${L}   ${right[n]:-}")
+done
+
+# ── 底部青色能量条（无口号）──
+bar=""
+for ((x=0; x<W+40; x++)); do
+  g=$((225 - 115 * x / (W+39)))
+  bar+="$(tc 0 "$g" 255)▇"
+done
+out+=("${bar}${RST}")
+
+case "${1:-}" in
+  -a|--animate)
+    for l in "${out[@]}"; do printf '%s\n' "$l"; sleep 0.05; done
+    ;;
+  *)
+    printf '%s\n' "${out[@]}"
+    ;;
+esac

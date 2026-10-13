@@ -80,6 +80,21 @@ function sf { & 'C:\path\to\solaris-fetch.ps1' @args }
 
 > 注：脚本为 UTF-8 with BOM 编码（Windows PowerShell 5.1 正确读取中文所需），请勿以 ANSI 重新保存。
 
+## 计算机协会版 cxa-fetch
+
+`cxa-fetch` 是东南大学成贤学院**计算机协会**的终端横幅，与本仓库同款块状字设计语言，但换了一套视觉：
+
+- 顶部 `COMPUTER / ASSOCIATION` 两行艺体字，科技青→蓝渐变
+- 中部**奶龙像素画**：黄色圆顶头+梨形身、绿环黑瞳圆眼、细黑微笑线、奶白肚皮（招新海报同款形象）
+- 左下角保留东南大学校徽；信息栏仅保留 school 一栏与系统信息，**无口号**
+- 底部青色渐变能量条
+
+```bash
+sudo install -m 755 cxa-fetch /usr/local/bin/cxa-fetch
+cxa-fetch        # 显示横幅
+cxa-fetch -a     # 逐行动画
+```
+
 ## 自定义
 
 脚本为单文件 Bash，全部视觉定义集中在文件头部：
